@@ -48,6 +48,7 @@ async def _setup_database_and_config(app_settings):
     await connect_to_db()
     await sync_initial_settings()
     # Initialize KeyManager using potentially updated settings
+    logger.info(f"API_KEYS before KeyManager initialization: {app_settings.API_KEYS}") # Add this log
     await get_key_manager_instance(app_settings.API_KEYS)
     logger.info("Database, config sync, and KeyManager initialized successfully")
 

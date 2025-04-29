@@ -1,3 +1,8 @@
+import os
+from dotenv import load_dotenv
+
+# 在导入其他模块和定义 Settings 类之前加载 .env 文件
+load_dotenv()
 """
 应用程序配置模块
 """
@@ -15,11 +20,7 @@ from app.log.logger import Logger
 
 class Settings(BaseSettings):
     # 数据库配置
-    MYSQL_HOST: str
-    MYSQL_PORT: int
-    MYSQL_USER: str
-    MYSQL_PASSWORD: str
-    MYSQL_DATABASE: str
+    SQLITE_DATABASE_PATH: str = "data/app.db" # SQLite 数据库文件路径
     
     # API相关配置
     API_KEYS: List[str]

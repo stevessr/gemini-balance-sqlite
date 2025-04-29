@@ -1,12 +1,14 @@
 """
 数据库初始化模块
 """
+import os # Import os module
 from dotenv import dotenv_values
 
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from app.database.connection import engine, Base
+from app.config.config import settings # Import settings to get database path
 from app.database.models import Settings
 from app.log.logger import get_database_logger
 
@@ -67,6 +69,12 @@ def initialize_database():
     初始化数据库
     """
     try:
+        # 确保数据库文件所在的目录存在
+        db_dir = os.path.dirname(settings.SQLITE_DATABASE_PATH)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+            logger.info(f"Created database directory: {db_dir}")
+
         # 创建表
         create_tables()
         
