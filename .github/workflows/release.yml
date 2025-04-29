@@ -17,16 +17,45 @@ jobs:
         uses: actions/checkout@v3
 
       # Step 2: 自动生成 Release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Step 2: Create or Update Release using GitHub Script
+      - name: Create or Update Release
+        id: create_update_release
+        uses: actions/github-script@v6
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tag = process.env.GITHUB_REF.replace('refs/tags/', '');
+            let release = null;
+            try {
+              // Try to get existing release by tag
+              const { data } = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tag,
+              });
+              release = data;
+              console.log(`Found existing release: ${release.html_url}`);
+            } catch (error) {
+              if (error.status === 404) {
+                // If release not found, create a new one
+                console.log(`Release for tag ${tag} not found. Creating a new one.`);
+                const { data } = await github.rest.repos.createRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag_name: tag,
+                  name: tag,
+                  draft: false,
+                  prerelease: false,
+                });
+                release = data;
+                console.log(`Created new release: ${release.html_url}`);
+              } else {
+                throw error; // Re-throw other errors
+              }
+            }
+            
+            // Set the upload_url as a step output
+            core.setOutput('upload_url', release.upload_url);
       
       # Step 3: 可选，构建zip文件
       - name: Create ZIP file
@@ -39,7 +68,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.create_update_release.outputs.upload_url }}
           asset_path: ./gemini-balance.zip # 替换为你的构建文件路径
           asset_name: gemini-balance.zip  # 替换为你的文件名
           asset_content_type: application/zip

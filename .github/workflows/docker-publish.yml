@@ -2,8 +2,8 @@ name: Docker Image CI
 
 on:
   push:
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*' # 当推送以 "v" 开头的标签时触发（如 v1.0.0, v2.1.0）
 
 env:
   REGISTRY: ghcr.io
