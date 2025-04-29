@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*' # 当推送以 "v" 开头的标签时触发（如 v1.0.0, v2.1.0）
+  workflow_dispatch:
+    inputs:
+      docker_tag:
+        description: 'Docker image tag (e.g., latest, 1.0.0)'
+        required: true
+        default: 'latest'
 
 env:
   REGISTRY: ghcr.io
@@ -41,10 +47,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # https://github.com/docker/metadata-action/tree/v5/?tab=readme-ov-file#semver
-            # Event: push,     Ref: refs/head/main,       Tags: main
-            # Event: push tag, Ref: refs/tags/v1.2.3,     Tags: 1.2.3, 1.2, 1, latest
-            # Event: push tag, Ref: refs/tags/v2.0.8-rc1, Tags: 2.0.8-rc1
+            # Keep existing metadata tags for potential future use or other triggers
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -52,6 +55,15 @@ jobs:
           labels: |
             org.opencontainers.image.description=OpenAI API Compatible Server
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
+
+      # Step: Extract Tag
+      - name: Extract Tag
+        id: extract_tag
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Remove 'v' prefix if it exists
+          DOCKER_TAG="${TAG#v}"
+          echo "docker_tag=${DOCKER_TAG}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -64,7 +76,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           load: false
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.docker_tag || steps.extract_tag.outputs.docker_tag }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,scope=${{ github.workflow }}
