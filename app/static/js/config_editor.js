@@ -63,7 +63,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelBulkDeleteApiKeyBtn = document.getElementById('cancelBulkDeleteApiKeyBtn'); // 新增
     const confirmBulkDeleteApiKeyBtn = document.getElementById('confirmBulkDeleteApiKeyBtn'); // 新增
     const bulkDeleteApiKeyInput = document.getElementById('bulkDeleteApiKeyInput'); // 新增
-
+ 
+    // --- 新增：Proxy 模态框相关 ---
+    const proxyModal = document.getElementById('proxyModal');
+    const addProxyBtn = document.getElementById('addProxyBtn'); // Changed from bulkAddProxyBtn
+    const closeProxyModalBtn = document.getElementById('closeProxyModalBtn');
+    const cancelAddProxyBtn = document.getElementById('cancelAddProxyBtn');
+    const confirmAddProxyBtn = document.getElementById('confirmAddProxyBtn');
+    const proxyBulkInput = document.getElementById('proxyBulkInput');
+    const bulkDeleteProxyBtn = document.getElementById('bulkDeleteProxyBtn'); // 新增
+    const bulkDeleteProxyModal = document.getElementById('bulkDeleteProxyModal'); // 新增
+    const closeBulkDeleteProxyModalBtn = document.getElementById('closeBulkDeleteProxyModalBtn'); // 新增
+    const cancelBulkDeleteProxyBtn = document.getElementById('cancelBulkDeleteProxyBtn'); // 新增
+    const confirmBulkDeleteProxyBtn = document.getElementById('confirmBulkDeleteProxyBtn'); // 新增
+    const bulkDeleteProxyInput = document.getElementById('bulkDeleteProxyInput'); // 新增
+    // --- 结束：Proxy 模态框相关 ---
+ 
     // --- 新增：重置确认模态框相关 ---
     const resetConfirmModal = document.getElementById('resetConfirmModal');
     const closeResetModalBtn = document.getElementById('closeResetModalBtn');
@@ -111,8 +126,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target == bulkDeleteApiKeyModal) { // 新增对批量删除模态框的处理
             bulkDeleteApiKeyModal.classList.remove('show');
         }
+        if (event.target == proxyModal) { // 新增对代理模态框的处理
+            proxyModal.classList.remove('show');
+        }
+        if (event.target == bulkDeleteProxyModal) { // 新增对批量删除代理模态框的处理
+            bulkDeleteProxyModal.classList.remove('show');
+        }
     });
-
+ 
     // 确认添加 API Key
     if (confirmAddApiKeyBtn) {
         confirmAddApiKeyBtn.addEventListener('click', handleBulkAddApiKeys);
@@ -158,7 +179,77 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // --- 结束：批量删除 API Key 相关 ---
     // --- 结束：API Key 相关 ---
+ 
+    // --- 新增：Proxy 模态框事件 ---
+    // 打开模态框 (Changed event listener to addProxyBtn)
+    if (addProxyBtn) {
+        addProxyBtn.addEventListener('click', () => {
+            if (proxyModal) {
+                proxyModal.classList.add('show');
+            }
+            if (proxyBulkInput) proxyBulkInput.value = ''; // 清空输入框
+        });
+    }
+ 
+    // 关闭模态框 (X 按钮)
+    if (closeProxyModalBtn) {
+        closeProxyModalBtn.addEventListener('click', () => {
+            if (proxyModal) {
+                proxyModal.classList.remove('show');
+            }
+        });
+    }
+ 
+    // 关闭模态框 (取消按钮)
+    if (cancelAddProxyBtn) {
+        cancelAddProxyBtn.addEventListener('click', () => {
+            if (proxyModal) {
+                proxyModal.classList.remove('show');
+            }
+        });
+    }
+ 
+    // 确认添加 Proxy
+    if (confirmAddProxyBtn) {
+        confirmAddProxyBtn.addEventListener('click', handleBulkAddProxies);
+    }
+    // --- 结束：Proxy 模态框事件 ---
 
+    // --- 新增：批量删除 Proxy 相关事件 ---
+    // 打开批量删除模态框
+    if (bulkDeleteProxyBtn) {
+        bulkDeleteProxyBtn.addEventListener('click', () => {
+            if (bulkDeleteProxyModal) {
+                bulkDeleteProxyModal.classList.add('show');
+            }
+            if (bulkDeleteProxyInput) bulkDeleteProxyInput.value = ''; // 清空输入框
+        });
+    }
+
+    // 关闭批量删除模态框 (X 按钮)
+    if (closeBulkDeleteProxyModalBtn) {
+        closeBulkDeleteProxyModalBtn.addEventListener('click', () => {
+            if (bulkDeleteProxyModal) {
+                bulkDeleteProxyModal.classList.remove('show');
+            }
+        });
+    }
+
+    // 关闭批量删除模态框 (取消按钮)
+    if (cancelBulkDeleteProxyBtn) {
+        cancelBulkDeleteProxyBtn.addEventListener('click', () => {
+            if (bulkDeleteProxyModal) {
+                bulkDeleteProxyModal.classList.remove('show');
+            }
+        });
+    }
+
+    // 确认批量删除 Proxy
+    if (confirmBulkDeleteProxyBtn) {
+        confirmBulkDeleteProxyBtn.addEventListener('click', handleBulkDeleteProxies);
+    }
+    // --- 结束：批量删除 Proxy 相关 ---
+ 
     // --- 新增：重置确认模态框事件监听 (移到 DOMContentLoaded 内部) ---
     if (closeResetModalBtn) {
         closeResetModalBtn.addEventListener('click', () => {
@@ -265,6 +356,10 @@ async function initConfig() {
         if (!config.FILTERED_MODELS || !Array.isArray(config.FILTERED_MODELS) || config.FILTERED_MODELS.length === 0) {
             config.FILTERED_MODELS = ['gemini-1.0-pro-latest'];
         }
+        // --- 新增：处理 PROXIES 默认值 ---
+        if (!config.PROXIES || !Array.isArray(config.PROXIES)) {
+            config.PROXIES = []; // 默认为空数组
+        }
         // --- 新增：处理新字段的默认值 ---
         if (!config.THINKING_MODELS || !Array.isArray(config.THINKING_MODELS)) {
             config.THINKING_MODELS = []; // 默认为空数组
@@ -296,6 +391,7 @@ async function initConfig() {
             SEARCH_MODELS: ['gemini-1.5-flash-latest'],
             FILTERED_MODELS: ['gemini-1.0-pro-latest'],
             UPLOAD_PROVIDER: 'smms',
+            PROXIES: [], // 添加默认值
             THINKING_MODELS: [],
             THINKING_BUDGET_MAP: {}
         };
@@ -520,6 +616,92 @@ function handleBulkDeleteApiKeys() {
     // Clear the textarea after processing
     bulkDeleteTextarea.value = '';
 }
+
+// --- 新增：处理批量添加 Proxy 的逻辑 ---
+function handleBulkAddProxies() {
+    const proxyBulkInput = document.getElementById('proxyBulkInput');
+    const proxyContainer = document.getElementById('PROXIES_container');
+    const proxyModal = document.getElementById('proxyModal');
+
+    if (!proxyBulkInput || !proxyContainer || !proxyModal) return;
+
+    const bulkText = proxyBulkInput.value;
+    // 匹配 http(s):// 或 socks5:// 格式的代理，允许包含用户名密码
+    const proxyRegex = /(?:https?|socks5):\/\/(?:[^:@\/]+(?::[^@\/]+)?@)?(?:[^:\/\s]+)(?::\d+)?/g;
+    const extractedProxies = bulkText.match(proxyRegex) || [];
+
+    // 获取当前已有的 proxies
+    const currentProxyInputs = proxyContainer.querySelectorAll('.array-input');
+    const currentProxies = Array.from(currentProxyInputs).map(input => input.value).filter(proxy => proxy.trim() !== '');
+
+    // 合并并去重
+    const combinedProxies = new Set([...currentProxies, ...extractedProxies]);
+    const uniqueProxies = Array.from(combinedProxies);
+
+    // 清空现有列表显示
+    const existingItems = proxyContainer.querySelectorAll('.array-item');
+    existingItems.forEach(item => item.remove());
+
+    // 重新填充列表
+    uniqueProxies.forEach(proxy => {
+        addArrayItemWithValue('PROXIES', proxy);
+    });
+
+    // 关闭模态框
+    proxyModal.classList.remove('show');
+    showNotification(`添加/更新了 ${uniqueProxies.length} 个唯一代理`, 'success');
+}
+// --- 结束：处理批量添加 Proxy 的逻辑 ---
+
+// --- 新增：处理批量删除 Proxy 的逻辑 ---
+function handleBulkDeleteProxies() {
+    const bulkDeleteTextarea = document.getElementById('bulkDeleteProxyInput');
+    const proxyContainer = document.getElementById('PROXIES_container');
+    const bulkDeleteModal = document.getElementById('bulkDeleteProxyModal');
+
+    if (!bulkDeleteTextarea || !proxyContainer || !bulkDeleteModal) return;
+
+    const bulkText = bulkDeleteTextarea.value;
+    if (!bulkText.trim()) {
+        showNotification('请粘贴需要删除的代理地址', 'warning');
+        return;
+    }
+
+    // 使用与添加时相同的正则表达式来提取要删除的代理
+    const proxyRegex = /(?:https?|socks5):\/\/(?:[^:@\/]+(?::[^@\/]+)?@)?(?:[^:\/\s]+)(?::\d+)?/g;
+    const proxiesToDelete = new Set(bulkText.match(proxyRegex) || []); // 使用 Set 进行高效查找
+
+    if (proxiesToDelete.size === 0) {
+        showNotification('未在输入内容中提取到有效的代理地址格式', 'warning');
+        return;
+    }
+
+    const proxyItems = proxyContainer.querySelectorAll('.array-item');
+    let deleteCount = 0;
+
+    proxyItems.forEach(item => {
+        const input = item.querySelector('.array-input');
+        // 检查输入框是否存在及其值是否在要删除的集合中
+        if (input && proxiesToDelete.has(input.value)) {
+            item.remove(); // 删除整个数组项元素
+            deleteCount++;
+        }
+    });
+
+    // 关闭模态框
+    bulkDeleteModal.classList.remove('show');
+
+    // 提供反馈
+    if (deleteCount > 0) {
+        showNotification(`成功删除了 ${deleteCount} 个匹配的代理`, 'success');
+    } else {
+        showNotification('列表中未找到您输入的任何代理进行删除', 'info');
+    }
+
+    // 处理后清空文本区域
+    bulkDeleteTextarea.value = '';
+}
+// --- 结束：处理批量删除 Proxy 的逻辑 ---
 
 // 切换标签
 function switchTab(tabId) {
@@ -975,10 +1157,6 @@ function generateRandomToken() {
 }
 // --- 结束：生成随机令牌函数 ---
 
-// --- 修改：添加思考模型预算映射项 (现在由添加思考模型触发) ---
-// function addBudgetMapItem() {
-//    // 不再需要手动添加
-// }
 
 // Deprecated: This function is now effectively replaced by createAndAppendBudgetMapItem
 // for the initial population logic. It delegates to the new function if called.
